@@ -92,20 +92,22 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.cypherButton).setOnClickListener {
             val key = getEnglishInput( keyView.text.toString())
-            var isEmpty = false
+            var isEmpty1 = false
+            var isEmpty2 = false
             if(key.isNotEmpty()){
                 val sourceText = getEnglishInput(sourceTextView.text.toString())
                 val columnCipherTable = createColumnCipherTable(sourceText, key)
                 cipherTextView.text = codeColumnCipher(columnCipherTable)
-            } else isEmpty = true
+            } else isEmpty1 = true
 
             val keyV = getRussianInput( keyViewV.text.toString())
             if (keyV.isNotEmpty()) {
                 val sourceTextV = getRussianInput(sourceTextViewV.text.toString())
                 val cipherTable = createVigenereCipherTable()
                 cipherTextViewV.text = codeCipherVigenere(sourceTextV, keyV, cipherTable)
-            } else isEmpty = true
-            if (isEmpty) Toast.makeText(this, "Введите ключ", Toast.LENGTH_LONG).show()
+            } else isEmpty2 = true
+            if (!isEmpty1 || !isEmpty2
+            ) Toast.makeText(this, "Введите ключ", Toast.LENGTH_LONG).show()
         }
 
         findViewById<Button>(R.id.decryptionButton).setOnClickListener {
@@ -195,16 +197,22 @@ class MainActivity : AppCompatActivity() {
         cipherTable.add(1, Array(key.length) { ' ' })
         val sortPhrase = String(key.toCharArray().apply { sort() })
         println(sortPhrase)
+        val keyMap = mutableMapOf<Char, Int>()
+        for (i in sortPhrase.indices) {
+            keyMap[sortPhrase[i]] = sortPhrase.indexOf(sortPhrase[i]) + 1
+        }
+        println(keyMap.toString())
         for (i in key.indices) {
             cipherTable[0][i] = key[i]
-            cipherTable[1][i] = (sortPhrase.indexOf(key[i]) + 1 + '0'.code).toChar()
+            cipherTable[1][i] = (keyMap.getValue(key[i]) + '0'.code).toChar()
+            keyMap[key[i]] = keyMap.getValue(key[i]) + 1
         }
         var row = 2
         var column = 0
         cipherTable.add(row, Array(key.length) { ' ' })
         for (i in phrase.indices) {
             cipherTable[row][column] = phrase[i]
-            if (row - 1 == cipherTable[1][column].code - '0'.code && i != phrase.length - 1) {
+            if (row - 1 == cipherTable[1][column].code - '0'.code || column == key.length - 1) {
                 row++
                 column = -1
                 cipherTable.add(row, Array(key.length) { ' ' })
@@ -235,16 +243,22 @@ class MainActivity : AppCompatActivity() {
         reverseTable.add(1, Array(key.length) { ' ' })
         val sortPhrase = String(key.toCharArray().apply { sort() })
         println(sortPhrase)
+        val keyMap = mutableMapOf<Char, Int>()
+        for (i in sortPhrase.indices) {
+            keyMap[sortPhrase[i]] = sortPhrase.indexOf(sortPhrase[i]) + 1
+        }
+        println(keyMap.toString())
         for (i in key.indices) {
             reverseTable[0][i] = key[i]
-            reverseTable[1][i] = (sortPhrase.indexOf(key[i]) + 1 + '0'.code).toChar()
+            reverseTable[1][i] = (keyMap.getValue(key[i]) + '0'.code).toChar()
+            keyMap[key[i]] = keyMap.getValue(key[i]) + 1
         }
         var row = 2
         var column = 0
         reverseTable.add(row, Array(key.length) { ' ' })
         for (i in cipherText.indices) {
             reverseTable[row][column] = '*'
-            if (row - 1 == reverseTable[1][column].code - '0'.code && i != cipherText.length - 1) {
+            if ((row - 1 == reverseTable[1][column].code - '0'.code || column == key.length - 1) && i != cipherText.length - 1) {
                 row++
                 column = -1
                 reverseTable.add(row, Array(key.length) { ' ' })
