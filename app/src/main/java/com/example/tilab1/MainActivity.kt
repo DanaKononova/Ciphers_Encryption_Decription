@@ -1,8 +1,8 @@
 package com.example.tilab1
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -91,40 +91,38 @@ class MainActivity : AppCompatActivity() {
         val decryptionTextViewV = findViewById<TextView>(R.id.decryptionTextV)
 
         findViewById<Button>(R.id.cypherButton).setOnClickListener {
-            val key = getEnglishInput( keyView.text.toString())
+            val key = getEnglishInput(keyView.text.toString())
             var isEmpty1 = false
             var isEmpty2 = false
-            if(key.isNotEmpty()){
+            if (key.isNotEmpty()) {
                 val sourceText = getEnglishInput(sourceTextView.text.toString())
                 val columnCipherTable = createColumnCipherTable(sourceText, key)
                 cipherTextView.text = codeColumnCipher(columnCipherTable)
             } else isEmpty1 = true
 
-            val keyV = getRussianInput( keyViewV.text.toString())
+            val keyV = getRussianInput(keyViewV.text.toString())
             if (keyV.isNotEmpty()) {
                 val sourceTextV = getRussianInput(sourceTextViewV.text.toString())
-                val cipherTable = createVigenereCipherTable()
-                cipherTextViewV.text = codeCipherVigenere(sourceTextV, keyV, cipherTable)
+                cipherTextViewV.text = codeCipherVigenere(sourceTextV, keyV)
             } else isEmpty2 = true
-            if (!isEmpty1 || !isEmpty2
-            ) Toast.makeText(this, "Введите ключ", Toast.LENGTH_LONG).show()
+            if (isEmpty1 && isEmpty2) Toast.makeText(this, "Введите ключ", Toast.LENGTH_LONG).show()
         }
 
         findViewById<Button>(R.id.decryptionButton).setOnClickListener {
-            val key = getEnglishInput( keyView.text.toString())
-            var isEmpty = false
-            if(key.isNotEmpty()){
+            val key = getEnglishInput(keyView.text.toString())
+            var isEmpty1 = false
+            var isEmpty2 = false
+            if (key.isNotEmpty()) {
                 val encryptedText = getEnglishInput(encryptedTextView.text.toString())
                 decryptionTextView.text = decodeColumnCipher(encryptedText, key)
-            } else isEmpty = true
+            } else isEmpty1 = true
 
-            val keyV = getRussianInput( keyViewV.text.toString())
+            val keyV = getRussianInput(keyViewV.text.toString())
             if (keyV.isNotEmpty()) {
                 val encryptedTextV = getRussianInput(encryptedTextViewV.text.toString())
-                val cipherTable = createVigenereCipherTable()
-                decryptionTextViewV.text = decodeCipherVigenere(encryptedTextV, keyV, cipherTable)
-            } else isEmpty = true
-            if (isEmpty) Toast.makeText(this, "Введите ключ", Toast.LENGTH_LONG).show()
+                decryptionTextViewV.text = decodeCipherVigenere(encryptedTextV, keyV)
+            } else isEmpty2 = true
+            if (isEmpty1 && isEmpty2) Toast.makeText(this, "Введите ключ", Toast.LENGTH_LONG).show()
         }
 
         findViewById<ImageButton>(R.id.sourceDown).setOnClickListener {
@@ -289,62 +287,30 @@ class MainActivity : AppCompatActivity() {
         return phrase
     }
 
-    fun createAutoKey(oldKey: String, phrase: String): String {
-        var autoKey = ""
-        for (i in phrase.indices) {
-            autoKey += if (i > oldKey.length - 1) phrase[i - oldKey.length] else oldKey[i]
-        }
-        return autoKey
-    }
-
-    fun createVigenereCipherTable(): Array<Array<Char>> {
-        val cipherTable = Array(n_Russian) { Array(n_Russian) { ' ' } }
-        for (i: Int in 0 until n_Russian) {
-            var k = i
-            for (j: Int in 0..i) {
-                cipherTable[k][j] = russianAlphabet[i]
-                k--
-            }
-        }
-        for (i: Int in n_Russian - 1 downTo 1) {
-            var k = i
-            for (j: Int in n_Russian - 1 downTo i) {
-                cipherTable[k][j] = russianAlphabet[i - 1]
-                k++
-            }
-        }
-        return cipherTable
-    }
-
-    fun codeCipherVigenere(phrase: String, key: String, cipherTable: Array<Array<Char>>): String {
-        val phraseWithKeyTable = Array(2) { Array(phrase.length) { ' ' } }
-
-        for (i in phrase.indices) {
-            phraseWithKeyTable[0][i] = phrase[i]
-            phraseWithKeyTable[1][i] = key[i]
+    fun codeCipherVigenere(phrase: String, key: String): String {
+        var autoKey = key
+        val keyLength = key.length
+        for (j in 0 until phrase.length - keyLength) {
+            autoKey += phrase.get(j)
         }
 
         var cipherText = ""
-        var row = 0
-        var column = 0
         for (i in phrase.indices) {
-            row = russianAlphabet.indexOf(phraseWithKeyTable[1][i])
-            column = russianAlphabet.indexOf(phraseWithKeyTable[0][i])
-            cipherText += cipherTable[row][column]
+            cipherText += russianAlphabet[(n_Russian + russianAlphabet.indexOf(phrase[i]) + russianAlphabet.indexOf(
+                autoKey[i]
+            )) % n_Russian]
         }
         return cipherText
     }
 
-    fun decodeCipherVigenere(cipherText: String, key: String, cipherTable: Array<Array<Char>>): String {
+    fun decodeCipherVigenere(cipherText: String, key: String): String {
         var phrase = ""
-        var row = 0
+        var autoKey = key
         for (i: Int in cipherText.indices) {
-            row = russianAlphabet.indexOf(key[i])
-            for (j: Int in 0 until n_Russian) {
-                if (cipherTable[row][j] == cipherText[i]) {
-                    phrase += cipherTable[0][j]
-                }
-            }
+            phrase += russianAlphabet[(n_Russian + russianAlphabet.indexOf(cipherText[i]) - russianAlphabet.indexOf(
+                autoKey[i]
+            )) % n_Russian]
+            autoKey += phrase[i]
         }
         return phrase
     }
